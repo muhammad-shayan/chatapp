@@ -8,12 +8,12 @@ const getMessages = asyncHandler(async (req, res) => {
     const messages = await Messages.find({ chat: chatId })
       .populate("sender", "name pic email")
       .populate("readBy", "name email pic")
-      .populate("chats");
-    //.sort({ createdAt: -1 });
+      //.populate("chats");
+      .sort({ createdAt: -1 });
     res.status(200).json(messages);
   } catch (error) {
     res.status(400);
-    throw new Error("Unable to get messages");
+    throw new Error("Unable to get any messages");
   }
 });
 

@@ -23,6 +23,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.status(201).json({
+      _id: user._id,
       name: user.name,
       email: user.email,
       pic: user.pic,
@@ -58,6 +59,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
   if (user) {
     res.status(201).json({
+      _id: user._id,
       name: user.name,
       email: user.email,
       pic: user.pic,
@@ -69,6 +71,38 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
+const updateUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  let { name, pic } = req.body;
+  const User = await Users.findById(userId);
+  if (!name) {
+    name = User.name;
+  }
+  if (!pic) {
+    pic = User.pic;
+  }
+  const user = await Users.findByIdAndUpdate(
+    userId,
+    {
+      name,
+      pic,
+    },
+    { new: true }
+  );
+  if (user) {
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      pic: user.pic,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error("Unable to update");
+  }
+});
+
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
@@ -76,4 +110,5 @@ module.exports = {
   searchUsers,
   loginUser,
   registerUser,
+  updateUser,
 };

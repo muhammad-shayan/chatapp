@@ -1,6 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const Chats = require("../models/chatModel");
 const Users = require("../models/userModel");
+const Messages = require("../models/messageModel");
+const Notifications = require("../models/notificationModel");
 
 const fetchChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
@@ -54,6 +56,21 @@ const allChats = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+
+  try {
+    await Chats.findByIdAndDelete(chatId);
+    await Messages.deleteMany({ chat: chatId });
+    await Notifications.deleteMany({ chat: chatId });
+
+    res.status(200).json({ message: "Chat deleted" });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
 const createGroupChat = asyncHandler(async (req, res) => {
   const { chatUsers, chatName } = req.body;
   if (chatUsers.length < 2) {
@@ -97,11 +114,6 @@ const editGroupChat = asyncHandler(async (req, res) => {
     chatName = groupChat.chatName;
   }
 
-  if (users.length < 2) {
-    res.status(400);
-    throw new Error("At least 3 users are required for group chat");
-  }
-
   if (groupChat.groupAdmin._id.toString() !== req.user._id.toString()) {
     res.status(400);
     throw new Error("Not authorized to edit group chat");
@@ -114,7 +126,6 @@ const editGroupChat = asyncHandler(async (req, res) => {
         isGroupChat: true,
         chatName,
         users,
-        groupAdmin: req.user._id,
       },
       { new: true }
     );
@@ -126,9 +137,28 @@ const editGroupChat = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteGroupChat = asyncHandler(async (req, res) => {
-  const { groupChatId } = req.body;
+const leaveGroupChat = asyncHandler(async (req, res) => {
+  let { groupChatId, users } = req.body;
 
+  try {
+    await Chats.findByIdAndUpdate(
+      groupChatId,
+      {
+        isGroupChat: true,
+        users,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "ok" });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+const deleteGroupChat = asyncHandler(async (req, res) => {
+  const { groupChatId } = req.params;
   const groupChat = await Chats.findById(groupChatId);
 
   if (groupChat.groupAdmin._id.toString() !== req.user._id.toString()) {
@@ -138,10 +168,12 @@ const deleteGroupChat = asyncHandler(async (req, res) => {
 
   try {
     await Chats.findByIdAndDelete(groupChatId);
+    await Messages.deleteMany({ chat: groupChatId });
+    await Notifications.deleteMany({ chat: groupChatId });
 
-    res.status(200);
+    res.status(200).json({ message: "Chat deleted" });
   } catch (error) {
-    res.status(400).json({ message: "Chat deleted" });
+    res.status(400);
     throw new Error(error.message);
   }
 });
@@ -149,7 +181,9 @@ const deleteGroupChat = asyncHandler(async (req, res) => {
 module.exports = {
   fetchChat,
   allChats,
+  deleteChat,
   createGroupChat,
   editGroupChat,
   deleteGroupChat,
+  leaveGroupChat,
 };
