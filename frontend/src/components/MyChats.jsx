@@ -6,7 +6,7 @@ import ChatList from "./ChatList";
 import AddGroupChat from "./AddGroupChat";
 
 const MyChats = () => {
-  const { user, selectedChat, fetchAgain, setSelectedChat } = ChatState();
+  const { user, selectedChat, fetchAgain } = ChatState();
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
