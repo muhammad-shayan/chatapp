@@ -34,7 +34,7 @@ const Header = () => {
   const toast = useToast();
   const navigate = useNavigate();
   useEffect(() => {
-    socket = io("https://chatapp-mern-b9d23105e480.herokuapp.com/");
+    socket = io();
     if (user) socket.emit("login", user);
   }, [user]);
 

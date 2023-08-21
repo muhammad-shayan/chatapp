@@ -42,7 +42,7 @@ const MessageBox = () => {
   };
 
   useEffect(() => {
-    socket = io("https://chatapp-mern-b9d23105e480.herokuapp.com/");
+    socket = io();
     //socket.on("connected", () => setIsConnected(true));
   }, []);
 
